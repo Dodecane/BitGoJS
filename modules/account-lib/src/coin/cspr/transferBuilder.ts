@@ -1,8 +1,11 @@
 import { BaseCoin as CoinConfig } from '@bitgo/statics/dist/src/base';
-import { BuildTransactionError, NotImplementedError, SigningError } from '../baseCoin/errors';
+import { PublicKey } from 'casper-client-sdk';
+import { BuildTransactionError, SigningError } from '../baseCoin/errors';
 import { BaseKey } from '../baseCoin/iface';
+import { TransactionType } from '../baseCoin';
 import { TransactionBuilder, DEFAULT_M } from './transactionBuilder';
 import { Transaction } from './transaction';
+import { SECP256K1_PREFIX } from './constants';
 
 export class TransferBuilder extends TransactionBuilder {
   private _toAddress: string;
@@ -14,17 +17,27 @@ export class TransferBuilder extends TransactionBuilder {
 
   /** @inheritdoc */
   protected async buildImplementation(): Promise<Transaction> {
-    throw new NotImplementedError('buildImplementation not implemented');
+    this._session = {
+      amount: this._amount,
+      target: PublicKey.fromHex(SECP256K1_PREFIX + this._toAddress),
+    };
+    this.transaction.setTransactionType(TransactionType.Send);
+    return await super.buildImplementation();
   }
 
   /** @inheritdoc */
   initBuilder(tx: Transaction): void {
-    throw new NotImplementedError('initBuilder not implemented');
+    super.initBuilder(tx);
+    this.transaction.setTransactionType(TransactionType.Send);
+    // TODO: init to and amount
   }
 
   /** @inheritdoc */
   protected signImplementation(key: BaseKey): Transaction {
-    throw new NotImplementedError('signImplementation not implemented');
+    if (this._multiSignerKeyPairs.length >= DEFAULT_M) {
+      throw new SigningError('A maximum of ' + DEFAULT_M + ' can sign the transaction.');
+    }
+    return super.signImplementation(key);
   }
 
   //region Transfer fields
