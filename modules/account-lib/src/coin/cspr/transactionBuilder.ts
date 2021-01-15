@@ -18,9 +18,6 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
   private _source: BaseAddress;
   protected _fee: GasFee;
   private _transaction: Transaction;
-  protected _startTime: Date;
-  protected _node: CasperNode;
-  protected _chainName: string;
   protected _session: CasperTransferTransaction | CasperModuleBytesTransaction;
   protected _duration: string;
   protected _multiSignerKeyPairs: KeyPair[];
@@ -36,9 +33,11 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
   // region Base Builder
   /** @inheritdoc */
   protected async buildImplementation(): Promise<Transaction> {
+    const gasPrice = this._fee.gasPrice ? parseInt(this._fee.gasPrice) : undefined;
     const deployParams = new DeployUtil.DeployParams(
       PublicKey.fromHex(SECP256K1_PREFIX + this._source.address),
       CHAIN_NAME,
+      gasPrice,
     );
 
     let session;
