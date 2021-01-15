@@ -44,7 +44,12 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
     switch (this.transaction.type) {
       case TransactionType.Send:
         const transferSession = this._session as CasperTransferTransaction;
-        session = new DeployUtil.Transfer(transferSession.amount, transferSession.target);
+        session = new DeployUtil.Transfer(
+          transferSession.amount,
+          transferSession.target,
+          undefined,
+          transferSession.id,
+        );
         break;
       case TransactionType.WalletInitialization:
         const moduleBytesSession = this._session as CasperModuleBytesTransaction;

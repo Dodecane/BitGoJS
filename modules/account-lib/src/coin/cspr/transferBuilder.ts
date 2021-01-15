@@ -6,11 +6,12 @@ import { TransactionType } from '../baseCoin';
 import { TransactionBuilder, DEFAULT_M } from './transactionBuilder';
 import { Transaction } from './transaction';
 import { SECP256K1_PREFIX } from './constants';
-import { isValidPublicKey, isValidAmount } from './utils';
+import { isValidPublicKey, isValidAmount, isValidTransferId } from './utils';
 
 export class TransferBuilder extends TransactionBuilder {
   private _toAddress: string;
   private _amount: string;
+  private _transferId: number;
 
   constructor(_coinConfig: Readonly<CoinConfig>) {
     super(_coinConfig);
@@ -21,6 +22,7 @@ export class TransferBuilder extends TransactionBuilder {
     this._session = {
       amount: this._amount,
       target: PublicKey.fromHex(SECP256K1_PREFIX + this._toAddress),
+      id: this._transferId,
     };
     this.transaction.setTransactionType(TransactionType.Send);
     return await super.buildImplementation();
@@ -67,6 +69,20 @@ export class TransferBuilder extends TransactionBuilder {
       throw new InvalidParameterValueError('Invalid amount');
     }
     this._amount = amount;
+    return this;
+  }
+
+  /**
+   * Set the transfer id, this acts like a memo id.
+   *
+   * @param {number} id transfer id
+   * @returns {TransferBuilder} the builder with the new parameter set
+   */
+  transferId(id: number): this {
+    if (!isValidTransferId(id)) {
+      throw new InvalidParameterValueError('Invalid amount');
+    }
+    this._transferId = id;
     return this;
   }
 

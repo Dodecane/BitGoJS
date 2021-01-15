@@ -46,3 +46,14 @@ export function isValidAmount(amount: string): boolean {
     bigNumberAmount.isLessThan(MAX_MOTES_AMOUNT)
   );
 }
+
+/**
+ * Returns whether or not the number is a valid amount
+ *
+ * @param {string} id - the number to validate
+ * @returns {boolean} - the validation result
+ */
+export function isValidTransferId(id: number): boolean {
+  const bigNumberAmount = new BigNumber(id);
+  return bigNumberAmount.isInteger() && bigNumberAmount.isGreaterThanOrEqualTo(0);
+}

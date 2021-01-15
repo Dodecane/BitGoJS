@@ -30,6 +30,7 @@ export interface GasFee {
 export interface CasperTransferTransaction {
   amount: BigNumberish;
   target: PublicKey;
+  id?: number;
 }
 
 export interface CasperModuleBytesTransaction {
