@@ -1,6 +1,8 @@
-import { PublicKey } from '@bitgo/bls';
+import BigNumber from 'bignumber.js';
 import { ByteArray, Keys } from 'casper-client-sdk';
 import { DefaultKeys } from '../baseCoin/iface';
+
+const MAX_MOTES_AMOUNT = new BigNumber(10).pow(154).minus(1);
 
 /**
  * Returns the account hash from a public key
@@ -31,17 +33,16 @@ export function isValidPublicKey(address: string): boolean {
 }
 
 /**
- * validate public key
+ * Returns whether or not the string is a valid amount number
  *
- * @param {string} address public key address
- * @returns {boolean} return a bool
+ * @param {string} amount - the string to validate
+ * @returns {boolean} - the validation result
  */
-export function isValidAddress(address: string): boolean {
-  if (!address || address.trim().length === 0) {
-    return false;
-  }
-  if (!address.match(/^[0-9a-fA-F]{64}$/)) {
-    return false;
-  }
-  return true;
+export function isValidAmount(amount: string): boolean {
+  const bigNumberAmount = new BigNumber(amount);
+  return (
+    bigNumberAmount.isInteger() &&
+    bigNumberAmount.isGreaterThanOrEqualTo(0) &&
+    bigNumberAmount.isLessThan(MAX_MOTES_AMOUNT)
+  );
 }

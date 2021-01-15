@@ -6,6 +6,7 @@ import { BaseKey } from '../baseCoin/iface';
 import { InvalidTransactionError, NotImplementedError, SigningError } from '../baseCoin/errors';
 import { KeyPair } from './keyPair';
 import { CasperTransaction } from './ifaces';
+import { SECP256K1_PREFIX } from './constants';
 
 export class Transaction extends BaseTransaction {
   protected _type: TransactionType;
@@ -24,6 +25,9 @@ export class Transaction extends BaseTransaction {
     const keys = keyPair.getKeys();
     if (!keys.prv) {
       throw new SigningError('Missing private key');
+    }
+    if (this._deploy.approvals.some(ap => !ap.signer.startsWith(SECP256K1_PREFIX))) {
+      throw new SigningError('Invalid deploy. Already signed with an invalid key');
     }
     const secpKeys = new Keys.Secp256K1(
       Uint8Array.from(Buffer.from(keys.pub, 'hex')),

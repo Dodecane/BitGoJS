@@ -58,7 +58,7 @@ export class WalletInitializationBuilder extends TransactionBuilder {
     if (tx.casperTx.approvals) {
       const signers = tx.casperTx.approvals.map(ap => ap.signer);
       for (const signer of signers) {
-        this.owner(signer); // TODO : it uses prefix 02
+        this.owner(signer);
       }
     }
   }

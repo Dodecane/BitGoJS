@@ -1,11 +1,12 @@
 import { BaseCoin as CoinConfig } from '@bitgo/statics/dist/src/base';
 import { PublicKey } from 'casper-client-sdk';
-import { BuildTransactionError, SigningError } from '../baseCoin/errors';
+import { BuildTransactionError, InvalidParameterValueError, SigningError } from '../baseCoin/errors';
 import { BaseKey } from '../baseCoin/iface';
 import { TransactionType } from '../baseCoin';
 import { TransactionBuilder, DEFAULT_M } from './transactionBuilder';
 import { Transaction } from './transaction';
 import { SECP256K1_PREFIX } from './constants';
+import { isValidPublicKey, isValidAmount } from './utils';
 
 export class TransferBuilder extends TransactionBuilder {
   private _toAddress: string;
@@ -48,7 +49,9 @@ export class TransferBuilder extends TransactionBuilder {
    * @returns {TransferBuilder} the builder with the new parameter set
    */
   to(address: string): this {
-    // TODO : isValidAddress
+    if (!isValidPublicKey(address)) {
+      throw new InvalidParameterValueError('Invalid address');
+    }
     this._toAddress = address;
     return this;
   }
@@ -60,7 +63,9 @@ export class TransferBuilder extends TransactionBuilder {
    * @returns {TransferBuilder} the builder with the new parameter set
    */
   amount(amount: string): this {
-    // TODO : isValidAmount
+    if (!isValidAmount(amount)) {
+      throw new InvalidParameterValueError('Invalid amount');
+    }
     this._amount = amount;
     return this;
   }
