@@ -10,7 +10,7 @@ import { Transaction } from './transaction';
 import { KeyPair } from './keyPair';
 import { GasFee, CasperModuleBytesTransaction, CasperTransferTransaction, SignatureData, CasperNode } from './ifaces';
 import { isValidPublicKey } from './utils';
-import { SECP256K1_PREFIX, CHAIN_NAME } from './constants';
+import { SECP256K1_PREFIX, CHAIN_NAME, MAXIMUM_DURATION } from './constants';
 
 export const DEFAULT_M = 3;
 export const DEFAULT_N = 2;
@@ -19,7 +19,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
   protected _fee: GasFee;
   private _transaction: Transaction;
   protected _session: CasperTransferTransaction | CasperModuleBytesTransaction;
-  protected _duration: string;
+  protected _duration: number;
   protected _multiSignerKeyPairs: KeyPair[];
   protected _signatures: SignatureData[];
 
@@ -38,6 +38,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
       PublicKey.fromHex(SECP256K1_PREFIX + this._source.address),
       CHAIN_NAME,
       gasPrice,
+      this._duration || MAXIMUM_DURATION,
     );
 
     let session;
@@ -144,11 +145,11 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
    */
   duration(validDuration: string): this {
     const duration = new BigNumber(validDuration);
-    if (duration.isNaN()) {
+    if (duration.isNaN() || duration.isGreaterThan(MAXIMUM_DURATION)) {
       throw new BuildTransactionError('Invalid duration');
     }
     this.validateValue(duration);
-    this._duration = duration.toString();
+    this._duration = duration.toNumber();
     return this;
   }
 
