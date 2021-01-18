@@ -6,6 +6,7 @@ import { WalletInitializationBuilder } from './walletInitializationBuilder';
 import { TransferBuilder } from './transferBuilder';
 import { TransactionBuilder } from './transactionBuilder';
 import { Transaction } from './transaction';
+import { DeployTag } from './enum';
 
 export class TransactionBuilderFactory extends BaseTransactionBuilderFactory {
   constructor(_coinConfig: Readonly<CoinConfig>) {
@@ -28,9 +29,9 @@ export class TransactionBuilderFactory extends BaseTransactionBuilderFactory {
     const tx = new Transaction(this._coinConfig);
     tx.casperTx = raw;
 
-    if (tx.casperTx.session.tag === 5) {
+    if (tx.casperTx.session.tag === DeployTag.transfer) {
       return this.getTransferBuilder(tx);
-    } else if (tx.casperTx.session.tag === 0) {
+    } else if (tx.casperTx.session.tag === DeployTag.moduleBytes) {
       // TODO , we have not parameter to absolute determite if is a walletInit contract
       return this.getWalletInitializationBuilder(tx);
     } else {

@@ -46,7 +46,7 @@ export class Transaction extends BaseTransaction {
 
   /** @inheritdoc */
   toBroadcastFormat(): Deploy {
-    if (!this.casperTx){
+    if (!this.casperTx) {
       throw new InvalidTransactionError('Empty transaction');
     }
     return this.casperTx;

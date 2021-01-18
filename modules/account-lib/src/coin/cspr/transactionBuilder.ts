@@ -66,8 +66,8 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
     const cTransaction = this.transaction.casperTx || DeployUtil.makeDeploy(deployParams, session, payment);
     this.transaction.casperTx = cTransaction;
 
-    for (const kp of this._multiSignerKeyPairs) {
-      await this.transaction.sign(kp);
+    for (const keyPair of this._multiSignerKeyPairs) {
+      await this.transaction.sign(keyPair);
     }
     for (const { signature } of this._signatures) {
       this.transaction.addSignature(signature);
