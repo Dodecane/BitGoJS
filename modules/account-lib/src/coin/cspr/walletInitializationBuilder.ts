@@ -1,14 +1,14 @@
 import fs from 'fs';
 import { BaseCoin as CoinConfig } from '@bitgo/statics/dist/src/base';
-import { CLValue, PublicKey } from 'casper-client-sdk';
-import { BuildTransactionError, InvalidKey } from '../baseCoin/errors';
+import { CLTypedAndToBytesHelper, CLValue, PublicKey, RuntimeArgs } from 'casper-client-sdk';
+import { BuildTransactionError } from '../baseCoin/errors';
 import { TransactionType } from '../baseCoin';
 import { TransactionBuilder, DEFAULT_M, DEFAULT_N } from './transactionBuilder';
 import { Transaction } from './transaction';
-import { Owner, RunTimeArg } from './ifaces';
+import { Owner, ContractArgs } from './ifaces';
 import { getAccountHash, isValidPublicKey } from './utils';
 
-const OWNER_WEIGHT = 1;
+const DEFAULT_OWNER_WEIGHT = 1;
 const wasmPath = '../../../resources/cspr/contract/keys-manager.wasm';
 export class WalletInitializationBuilder extends TransactionBuilder {
   private _owners: Owner[] = [];
@@ -22,33 +22,30 @@ export class WalletInitializationBuilder extends TransactionBuilder {
   // region Base Builder
   /** @inheritdoc */
   protected async buildImplementation(): Promise<Transaction> {
-    const args: RunTimeArg[] = [];
-    const thresholdMaxArgs = {
-      action: CLValue.string('set_key_management_threshold'),
-      weight: CLValue.u8(DEFAULT_M),
-    };
-    args.push(thresholdMaxArgs);
-    const thresholdMinArgs = {
-      action: CLValue.string('set_deployment_threshold'),
-      weight: CLValue.u8(DEFAULT_N),
-    };
-    args.push(thresholdMinArgs);
-
-    for (const _owner of this._owners) {
-      const ac = CLValue.fromBytes(getAccountHash({ pub: Buffer.from(_owner.address.rawPublicKey).toString('hex') }));
-      if (ac.hasError()) {
-        throw new InvalidKey('Failed to obtain public key');
-      }
-      args.push({
-        action: CLValue.string('set_key_weight'),
-        weight: CLValue.u8(OWNER_WEIGHT),
-        account: ac.value,
-      });
-    }
-
-    // this._session = { moduleBytes: this._contract, args: RuntimeArgs.fromMap(args).toBytes() };
+    const args = this.buildWalletParameters();
+    this._session = { moduleBytes: this._contract, args: RuntimeArgs.fromMap(args).toBytes() };
     this.transaction.setTransactionType(TransactionType.WalletInitialization);
     return await super.buildImplementation();
+  }
+
+  /**
+   * Build args needed to create a session, then we can send this session with the contract
+   * @returns {ContractArgs} contracts args to create a session
+   */
+  private buildWalletParameters(): ContractArgs {
+    const accounts = this._owners.map(owner =>
+      CLTypedAndToBytesHelper.bytes(getAccountHash({ pub: Buffer.from(owner.address.rawPublicKey).toString('hex') })),
+    );
+
+    const weights = new Array(3).fill(CLTypedAndToBytesHelper.u8(DEFAULT_OWNER_WEIGHT));
+
+    return {
+      action: CLValue.string('set_all'),
+      deployment_thereshold: CLValue.u8(DEFAULT_N),
+      key_management_threshold: CLValue.u8(DEFAULT_M),
+      accounts: CLValue.list(accounts),
+      weights: CLValue.list(weights),
+    }
   }
 
   /** @inheritdoc */

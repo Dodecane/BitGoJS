@@ -43,8 +43,10 @@ export interface Owner {
   weight: number;
 }
 
-export interface RunTimeArg {
+export interface ContractArgs {
   action: CLValue;
-  weight: CLValue;
-  account?: CLValue;
+  deployment_thereshold: CLValue;
+  key_management_threshold: CLValue;
+  accounts: CLValue;
+  weights: CLValue;
 }
