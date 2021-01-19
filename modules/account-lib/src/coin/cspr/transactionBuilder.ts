@@ -2,13 +2,12 @@ import BigNumber from 'bignumber.js';
 import { BaseCoin as CoinConfig } from '@bitgo/statics/dist/src/base';
 import { DeployUtil, PublicKey } from 'casper-client-sdk';
 import { parseInt } from 'lodash';
-import { Deploy } from 'casper-client-sdk/dist/lib/DeployUtil';
 import { BaseTransactionBuilder, TransactionType } from '../baseCoin';
 import { BuildTransactionError, NotImplementedError, SigningError } from '../baseCoin/errors';
 import { BaseAddress, BaseFee, BaseKey } from '../baseCoin/iface';
 import { Transaction } from './transaction';
 import { KeyPair } from './keyPair';
-import { GasFee, CasperModuleBytesTransaction, CasperTransferTransaction, SignatureData, CasperNode } from './ifaces';
+import { GasFee, CasperModuleBytesTransaction, CasperTransferTransaction, SignatureData } from './ifaces';
 import { isValidPublicKey } from './utils';
 import { SECP256K1_PREFIX, CHAIN_NAME, MAXIMUM_DURATION } from './constants';
 
@@ -33,32 +32,8 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
   // region Base Builder
   /** @inheritdoc */
   protected async buildImplementation(): Promise<Transaction> {
-    const gasPrice = this._fee.gasPrice ? parseInt(this._fee.gasPrice) : undefined;
-    const deployParams = new DeployUtil.DeployParams(
-      PublicKey.fromHex(SECP256K1_PREFIX + this._source.address),
-      CHAIN_NAME,
-      gasPrice,
-      this._duration || MAXIMUM_DURATION,
-    );
-
-    let session;
-    switch (this.transaction.type) {
-      case TransactionType.Send:
-        const transferSession = this._session as CasperTransferTransaction;
-        session = new DeployUtil.Transfer(
-          transferSession.amount,
-          transferSession.target,
-          undefined,
-          transferSession.id,
-        );
-        break;
-      case TransactionType.WalletInitialization:
-        const moduleBytesSession = this._session as CasperModuleBytesTransaction;
-        session = new DeployUtil.ModuleBytes(moduleBytesSession.moduleBytes, moduleBytesSession.args);
-        break;
-      default:
-        throw new BuildTransactionError('Transaction Type error');
-    }
+    const deployParams = this.getDeployParams();
+    const session = this.getSession();
 
     // @ts-ignore
     const payment = DeployUtil.standardPayment(parseInt(this._fee.gasLimit));
@@ -66,12 +41,8 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
     const cTransaction = this.transaction.casperTx || DeployUtil.makeDeploy(deployParams, session, payment);
     this.transaction.casperTx = cTransaction;
 
-    for (const keyPair of this._multiSignerKeyPairs) {
-      await this.transaction.sign(keyPair);
-    }
-    for (const { signature } of this._signatures) {
-      this.transaction.addSignature(signature);
-    }
+    await this.processSigning();
+
     return this.transaction;
   }
 
@@ -156,9 +127,9 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
   /**
    * Set an external transaction signature
    *
-   * @param signature Hex encoded signature string
-   * @param keyPair The public key keypair that was used to create the signature
-   * @returns This transaction builder
+   * @param {string} signature Hex encoded signature string
+   * @param {KeyPair} keyPair The public key keypair that was used to create the signature
+   * @returns {TransactionBuilder} This transaction builder
    */
   signature(signature: string, keyPair: KeyPair): this {
     // if we already have a signature for this key pair, just update it
@@ -211,10 +182,27 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
     }
   }
 
+  /**
+   * Validates that the mandatory fields are defined
+   */
   validateMandatoryFields(): void {
+    this.validateFee();
+    this.validateSource();
+  }
+
+  /**
+   * Validates that the fee field is defined
+   */
+  private validateFee(): void {
     if (this._fee === undefined) {
       throw new BuildTransactionError('Invalid transaction: missing fee');
     }
+  }
+
+  /**
+   * Validates that the source field is defined
+   */
+  private validateSource(): void {
     if (this._source === undefined) {
       throw new BuildTransactionError('Invalid transaction: missing source');
     }
@@ -235,6 +223,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
 
   // endregion
 
+  // region Getters and Setters
   /** @inheritdoc */
   protected get transaction(): Transaction {
     return this._transaction;
@@ -244,4 +233,56 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
   protected set transaction(transaction: Transaction) {
     this._transaction = transaction;
   }
+  // endregion
+
+  // region auxiliaryMethods
+  /**
+   * Generate a DeployParams instance with the transaction data
+   * @returns {DeployUtil.DeployParams}
+   */
+  private getDeployParams(): DeployUtil.DeployParams {
+    const gasPrice = this._fee.gasPrice ? parseInt(this._fee.gasPrice) : undefined;
+    return new DeployUtil.DeployParams(
+      PublicKey.fromHex(SECP256K1_PREFIX + this._source.address),
+      CHAIN_NAME,
+      gasPrice,
+      this._duration || MAXIMUM_DURATION,
+    );
+  }
+
+  /**
+   * Generate the session for the Deploy according to the transactionType.
+   * @returns {DeployUtil.ExecutableDeployItem}
+   */
+  private getSession(): DeployUtil.ExecutableDeployItem {
+    let session;
+    switch (this.transaction.type) {
+      case TransactionType.Send:
+        const transferSession = this._session as CasperTransferTransaction;
+        session = new DeployUtil.Transfer(
+          transferSession.amount,
+          transferSession.target,
+          undefined,
+          transferSession.id,
+        );
+        break;
+      case TransactionType.WalletInitialization:
+        const moduleBytesSession = this._session as CasperModuleBytesTransaction;
+        session = new DeployUtil.ModuleBytes(moduleBytesSession.moduleBytes, moduleBytesSession.args);
+        break;
+      default:
+        throw new BuildTransactionError('Transaction Type error');
+    }
+    return session;
+  }
+
+  private async processSigning(): Promise<void> {
+    for (const keyPair of this._multiSignerKeyPairs) {
+      await this.transaction.sign(keyPair);
+    }
+    for (const { signature } of this._signatures) {
+      this.transaction.addSignature(signature);
+    }
+  }
+  // endregion
 }

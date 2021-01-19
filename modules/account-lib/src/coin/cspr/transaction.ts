@@ -38,7 +38,7 @@ export class Transaction extends BaseTransaction {
 
   /**
    * Add a signature to this transaction
-   * @param signature The signature to add, in string hex format
+   * @param {string} signature The signature to add, in string hex format
    */
   addSignature(signature: string): void {
     this._signatures.push(signature);

@@ -45,7 +45,7 @@ describe('Cspr Transaction', () => {
   describe('should return encoded tx', function() {
     it('valid sign', async function() {
       const tx = getTransaction();
-      // TODO : tx.from(testData.WALLET_TXDATA);
+      // TODO STLX-1174: tx.from(testData.WALLET_TXDATA);
     });
   });
 });
