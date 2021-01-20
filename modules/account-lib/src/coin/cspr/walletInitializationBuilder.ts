@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { BaseCoin as CoinConfig } from '@bitgo/statics/dist/src/base';
 import { CLTypedAndToBytesHelper, CLValue, PublicKey, RuntimeArgs } from 'casper-client-sdk';
 import { BuildTransactionError } from '../baseCoin/errors';
@@ -6,17 +5,16 @@ import { TransactionType } from '../baseCoin';
 import { TransactionBuilder, DEFAULT_M, DEFAULT_N } from './transactionBuilder';
 import { Transaction } from './transaction';
 import { Owner, ContractArgs } from './ifaces';
-import { getAccountHash, isValidPublicKey } from './utils';
+import { getAccountHash, isValidPublicKey, walletInitContractHexCode } from './utils';
 
 const DEFAULT_OWNER_WEIGHT = 1;
-const wasmPath = '../../../resources/cspr/contract/keys-manager.wasm';
 export class WalletInitializationBuilder extends TransactionBuilder {
   private _owners: Owner[] = [];
   private _contract: Uint8Array;
 
   constructor(_coinConfig: Readonly<CoinConfig>) {
     super(_coinConfig);
-    this._contract = new Uint8Array(fs.readFileSync(wasmPath, null).buffer);
+    this._contract = Uint8Array.from(Buffer.from(walletInitContractHexCode, 'hex'));
   }
 
   // region Base Builder
@@ -37,7 +35,7 @@ export class WalletInitializationBuilder extends TransactionBuilder {
       CLTypedAndToBytesHelper.bytes(getAccountHash({ pub: Buffer.from(owner.address.rawPublicKey).toString('hex') })),
     );
 
-    const weights = new Array(3).fill(CLTypedAndToBytesHelper.u8(DEFAULT_OWNER_WEIGHT));
+    const weights = this._owners.map(owner => CLTypedAndToBytesHelper.u8(owner.weight));
 
     return {
       action: CLValue.string('set_all'),
@@ -45,7 +43,7 @@ export class WalletInitializationBuilder extends TransactionBuilder {
       key_management_threshold: CLValue.u8(DEFAULT_M),
       accounts: CLValue.list(accounts),
       weights: CLValue.list(weights),
-    }
+    };
   }
 
   /** @inheritdoc */
@@ -82,7 +80,7 @@ export class WalletInitializationBuilder extends TransactionBuilder {
       }
     }
 
-    this._owners.push({ address: PublicKey.fromHex(address), weight: OWNER_WEIGHT });
+    this._owners.push({ address: PublicKey.fromHex(address), weight: DEFAULT_OWNER_WEIGHT });
     return this;
   }
   // endregion

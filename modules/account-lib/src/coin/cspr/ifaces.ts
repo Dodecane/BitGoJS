@@ -43,10 +43,7 @@ export interface Owner {
   weight: number;
 }
 
-export interface ContractArgs {
-  action: CLValue;
-  deployment_thereshold: CLValue;
-  key_management_threshold: CLValue;
-  accounts: CLValue;
-  weights: CLValue;
-}
+export type ContractArgs = Record<
+  'action' | 'deployment_thereshold' | 'key_management_threshold' | 'accounts' | 'weights',
+  CLValue
+>;
