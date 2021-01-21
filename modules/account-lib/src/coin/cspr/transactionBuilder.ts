@@ -14,7 +14,7 @@ import { SECP256K1_PREFIX, CHAIN_NAME, MAXIMUM_DURATION } from './constants';
 export const DEFAULT_M = 3;
 export const DEFAULT_N = 2;
 export abstract class TransactionBuilder extends BaseTransactionBuilder {
-  private _source: BaseAddress;
+  protected _source: BaseAddress;
   protected _fee: GasFee;
   private _transaction: Transaction;
   protected _session: CasperTransferTransaction | CasperModuleBytesTransaction;

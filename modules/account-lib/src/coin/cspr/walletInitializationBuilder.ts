@@ -6,6 +6,7 @@ import { TransactionBuilder, DEFAULT_M, DEFAULT_N } from './transactionBuilder';
 import { Transaction } from './transaction';
 import { Owner, ContractArgs } from './ifaces';
 import { getAccountHash, isValidPublicKey, walletInitContractHexCode } from './utils';
+import { SECP256K1_PREFIX } from './constants';
 
 const DEFAULT_OWNER_WEIGHT = 1;
 export class WalletInitializationBuilder extends TransactionBuilder {
@@ -80,7 +81,7 @@ export class WalletInitializationBuilder extends TransactionBuilder {
       }
     }
 
-    this._owners.push({ address: PublicKey.fromHex(address), weight: DEFAULT_OWNER_WEIGHT });
+    this._owners.push({ address: PublicKey.fromHex(SECP256K1_PREFIX + address), weight: DEFAULT_OWNER_WEIGHT });
     return this;
   }
   // endregion
