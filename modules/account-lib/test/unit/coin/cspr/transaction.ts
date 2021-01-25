@@ -30,14 +30,14 @@ describe('Cspr Transaction', () => {
     it('valid', async () => {
       const tx = getTransaction();
       // TODO tx.from()
-      const keypair = new KeyPair({ prv: testData.OWNER_1.privateKey });
+      const keypair = new KeyPair({ prv: testData.ACCOUNT_1.privateKey });
       // TODO Assert should equal
     });
 
     it('multiple valid', async () => {
       const tx = getTransaction();
-      const keypair = new KeyPair({ prv: testData.OWNER_1.privateKey });
-      const keypair2 = new KeyPair({ prv: testData.OWNER_2.privateKey });
+      const keypair = new KeyPair({ prv: testData.ACCOUNT_1.privateKey });
+      const keypair2 = new KeyPair({ prv: testData.ACCOUNT_2.privateKey });
       // TODO ASSERTs
     });
   });

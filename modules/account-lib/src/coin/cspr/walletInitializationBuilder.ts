@@ -76,7 +76,11 @@ export class WalletInitializationBuilder extends TransactionBuilder {
       throw new BuildTransactionError('Invalid address: ' + address);
     }
     for (const _owner of this._owners) {
-      if (Buffer.from(_owner.address.rawPublicKey).toString('hex') === address) {
+      if (
+        Buffer.from(_owner.address.rawPublicKey)
+          .toString('hex')
+          .toUpperCase() === address.toUpperCase()
+      ) {
         throw new BuildTransactionError('Repeated owner address: ' + address);
       }
     }
