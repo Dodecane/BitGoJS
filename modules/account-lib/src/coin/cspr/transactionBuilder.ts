@@ -10,6 +10,7 @@ import { KeyPair } from './keyPair';
 import { GasFee, CasperModuleBytesTransaction, CasperTransferTransaction, SignatureData } from './ifaces';
 import { isValidPublicKey } from './utils';
 import { SECP256K1_PREFIX, CHAIN_NAME, MAXIMUM_DURATION } from './constants';
+import { ExecutableDeployItem } from 'casper-client-sdk/dist/lib/DeployUtil';
 
 export const DEFAULT_M = 3;
 export const DEFAULT_N = 2;
@@ -259,7 +260,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
     switch (this.transaction.type) {
       case TransactionType.Send:
         const transferSession = this._session as CasperTransferTransaction;
-        session = new DeployUtil.Transfer(
+        session = ExecutableDeployItem.newTransfer(
           transferSession.amount,
           transferSession.target,
           undefined,

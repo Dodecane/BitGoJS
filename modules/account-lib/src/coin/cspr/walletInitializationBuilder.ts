@@ -22,7 +22,7 @@ export class WalletInitializationBuilder extends TransactionBuilder {
   /** @inheritdoc */
   protected async buildImplementation(): Promise<Transaction> {
     const args = this.buildWalletParameters();
-    this._session = { moduleBytes: this._contract, args: RuntimeArgs.fromMap(args).toBytes() };
+    this._session = { moduleBytes: this._contract, args: RuntimeArgs.fromMap(args) };
     this.transaction.setTransactionType(TransactionType.WalletInitialization);
     return await super.buildImplementation();
   }

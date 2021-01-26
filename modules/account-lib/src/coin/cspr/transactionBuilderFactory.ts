@@ -7,6 +7,7 @@ import { TransferBuilder } from './transferBuilder';
 import { TransactionBuilder } from './transactionBuilder';
 import { Transaction } from './transaction';
 import { DeployTag } from './enum';
+import { walletInitContractHexCode } from './utils';
 
 export class TransactionBuilderFactory extends BaseTransactionBuilderFactory {
   constructor(_coinConfig: Readonly<CoinConfig>) {
@@ -29,9 +30,16 @@ export class TransactionBuilderFactory extends BaseTransactionBuilderFactory {
     const tx = new Transaction(this._coinConfig);
     tx.casperTx = raw;
 
-    if (tx.casperTx.session.tag === DeployTag.transfer) {
+    if (tx.casperTx.session.isTransfer()) {
       return this.getTransferBuilder(tx);
-    } else if (tx.casperTx.session.tag === DeployTag.moduleBytes) {
+    } else if (tx.casperTx.session.isModuleBytes()) {
+      const moduleBytes = tx.casperTx.session.getArgByName('moduleBytes');
+      if (moduleBytes) {
+        const contract = Uint8Array.from(Buffer.from(walletInitContractHexCode, 'hex'));
+        console.log(moduleBytes.asBytesArray() === contract);
+      } else {
+        console.log('Contract not found');
+      }
       // TODO , we have not parameter to absolute determite if is a walletInit contract
       return this.getWalletInitializationBuilder(tx);
     } else {
